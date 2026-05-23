@@ -19,27 +19,20 @@ class RelationController extends Controller
             'password' => bcrypt('secret123'),
         ]);
 
-        $user->profile()->firstOrCreate([
-            'user_id' => $user->id,
-        ], [
-            'bio' => 'Perfil creado desde la relación 1:1 en Laravel.',
-        ]);
-
-        $posts = collect([
-            ['title' => 'Primer post de la actividad', 'body' => 'Ejemplo de relación 1:N en Laravel.'],
-            ['title' => 'Segundo post de la actividad', 'body' => 'Otro post para el mismo usuario.'],
-        ])->map(fn ($data) => $user->posts()->firstOrCreate([
-            'title' => $data['title'],
-        ], $data));
-
         $roles = collect(['estudiante', 'editor'])->map(fn ($name) => Role::firstOrCreate(['name' => $name]));
         $user->roles()->syncWithoutDetaching($roles->pluck('id')->all());
+
+        $post = Post::firstOrCreate([
+            'title' => 'Post de ejemplo polimórfico',
+        ], [
+            'body' => 'Post utilizado únicamente para la relación polimórfica.',
+        ]);
 
         $video = Video::firstOrCreate(['title' => 'Video tutorial de Laravel'], [
             'description' => 'Video de ejemplo para la relación polimórfica.',
         ]);
 
-        $posts->first()->comments()->firstOrCreate([
+        $post->comments()->firstOrCreate([
             'content' => 'Comentario polimórfico en el post.',
         ], [
             'user_id' => $user->id,
@@ -54,8 +47,7 @@ class RelationController extends Controller
         return response()->json([
             'message' => 'Datos de relaciones creados correctamente.',
             'user_id' => $user->id,
-            'profile_id' => $user->profile->id,
-            'post_ids' => $posts->pluck('id'),
+            'post_id' => $post->id,
             'role_ids' => $roles->pluck('id'),
             'video_id' => $video->id,
         ]);
